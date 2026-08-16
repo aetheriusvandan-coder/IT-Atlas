@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IT Atlas - Classic Layout & Kanten-Ausrichtung</title>
+
+<!-- ==========================================================================
+     1. CSS-STYLING (ORIGINAL DARK-THEME + STRG-RASTER)
+     ========================================================================== -->
+<style>
+/* --- 1.1 CSS-VARIABLEN & GRUNDGERÜST --- */
+:root{
+  --bg:#061126;
+  --panel:#09162b;
+  --line:#5d7090;
+  --edge:#a2b0c7;
+  --text:#edf2fa;
+  --muted:#a7b0c0;
+  --yellow:#f0de00;
+  --pink:#ff168a;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:#061126}
+body{
+  background:radial-gradient(ellipse at 48% 49%,#14274a 0,rgba(11,29,57,.68) 27%,transparent 54%),linear-gradient(135deg,#050e20,#07152b 65%,#051025);
+}
+.app{height:100%;display:flex;flex-direction:column}
+
+/* --- 1.2 HEADER & OBERE BEDIENLEISTE --- */
+header{
+  height:68px;display:flex;align-items:center;gap:20px;padding:0 26px;
+  background:rgba(3,11,25,.76);
+  border-bottom:1px solid #293854;
+  z-index:5;
+}
+.brand{width:360px}.brand h1{font-size:18px;line-height:20px;margin:0 0 4px;font-weight:750}.brand p{font-size:12px;margin:0;color:#adb6c7}
+.controls{display:flex;gap:8px;align-items:center;flex:1}
+.search{position:relative}.search span{position:absolute;left:12px;top:8px;font-size:16px;color:#9eabc0}
+.search input,select,button{
+  height:35px;border:1px solid #293a56;border-radius:6px;background:#09162a;color:#eaf0fb;font:600 12px Inter,Segoe UI,Arial;
+}
+.search input{width:260px;padding:0 12px 0 34px;outline:none;transition:border-color .2s}
+.search input:focus{border-color:#7290bd}
+select{width:145px;padding:0 11px}
+button{
+  background:linear-gradient(135deg,#2a477d,#294574);
+  border-color:#38598d;padding:0 12px;cursor:pointer;transition:filter .15s, transform .1s;
+}
+button:hover{filter:brightness(1.15)}
+button:active{transform:scale(0.98)}
+
+/* Navigation & IO Buttons */
+.history-btn{
+  width:35px;height:35px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:bold;
+}
+.io-btn{display:inline-flex;align-items:center;gap:5px;}
+
+/* --- 1.3 SUBBAR / INFOLEISTE --- */
+.subbar{
+  height:32px;border-bottom:1px solid #273752;background:rgba(4,13,28,.72);
+  display:flex;align-items:center;padding:0 26px;font-size:11.5px;color:#aab4c5;
+}
+.subbar .help{margin-left:auto}
+
+/* --- 1.4 CANVAS & VIEWPORT (STRG-RASTER) --- */
+main{position:relative;flex:1;min-height:0}
+.viewport{position:absolute;inset:0 264px 0 0;overflow:hidden;cursor:grab}
+.viewport.drag{cursor:grabbing}
+.viewport.selecting{cursor:crosshair}
+.scene{
+  position:absolute;width:2000px;height:1250px;transform-origin:0 0;
+  transition:background .15s;
+}
+
+/* Hilfsraster beim Halten von Strg */
+.scene.grid-active{
+  background-image:
+    linear-gradient(to right, rgba(106, 167, 237, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(106, 167, 237, 0.14) 1px, transparent 1px);
+  background-size:25px 25px;
+}
+
+/* Auswahlrahmen (Box-Selection) */
+.selection-box{
+  position:absolute;border:1px dashed #6aa7ed;background:rgba(106, 167, 237, 0.15);
+  pointer-events:none;z-index:10;display:none;
+}
+
+/* --- 1.5 VERBINDUNGSLINIEN (GESTRICHELT) --- */
+.lines{position:absolute;inset:0;width:2000px;height:1250px;pointer-events:none}
+.lines .edge{
+  fill:none;stroke:var(--edge);stroke-width:1.6;opacity:0.45;stroke-dasharray:4 4;
+}
+
+/* --- 1.6 KACHELN / NODES (ORIGINAL GLOW) --- */
+.node{
+  position:absolute;transform:translate(-50%,-50%);padding:7px 11px;
+  border:1px solid #2c466b;border-radius:6px;min-width:44px;
+  background:linear-gradient(#122440,#0d1c33);
+  box-shadow:0 3px 8px rgba(0,0,0,.25);
+  font-size:11px;line-height:14px;white-space:nowrap;text-align:center;color:#eef3fa;
+  cursor:grab;user-select:none;transition:transform .15s,border .15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.node:hover{transform:translate(-50%,-50%) scale(1.06);border-color:#80a2d2}
+.node.locked{cursor:pointer}
+
+/* Schloss-Icon */
+.lock-icon{
+  font-size:10px;line-height:1;cursor:pointer;opacity:0.35;transition:opacity .15s, transform .15s;padding:2px;
+}
+.lock-icon:hover{opacity:1;transform:scale(1.2)}
+.node.locked .lock-icon{opacity:0.95}
+
+/* Zentrums & Gruppen Glows */
+.node.group{
+  font-size:12px;font-weight:750;border-color:var(--yellow);
+  background:linear-gradient(#292b1d,#172333);
+  box-shadow:0 0 5px #f0de00,0 0 18px rgba(240,222,0,.45);
+  padding:8px 12px;
+}
+.node.center{
+  font-size:17px;font-weight:800;padding:13px 20px;border-color:var(--pink);
+  background:linear-gradient(135deg,#4a153f,#281330);
+  box-shadow:0 0 5px #ff168a,0 0 28px rgba(255,22,138,.65);
+}
+.node.theme{border-color:#416b9e;background:linear-gradient(#102542,#0c1b31)}
+.node.dim{opacity:.13}
+.node.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25),0 0 24px #6aa7ed}
+
+.zoom{
+  position:absolute;left:14px;bottom:14px;border:1px solid #2a3b58;background:#09162a;
+  border-radius:5px;padding:5px 8px;color:#99a9bf;font-size:10px;
+}
+
+/* --- 1.7 SEITENLEISTE & NOTIZEN --- */
+aside{
+  position:absolute;right:0;top:0;bottom:0;width:264px;
+  background:rgba(7,16,32,.95);border-left:1px solid #293954;
+  padding:19px 13px;overflow:auto;z-index:4;
+}
+aside h2{font-size:19px;margin:0 0 7px}
+aside .subtitle{color:#aeb8ca;font-size:12px;margin-bottom:18px}
+.rule{border-top:1px solid #283851;margin:16px 0 18px}
+.heading{font-size:12.5px;font-weight:750;margin-bottom:9px}
+
+.note-box{
+  width:100%;min-height:90px;max-height:190px;overflow-y:auto;resize:vertical;
+  background:#0b1930;border:1px solid #293b58;border-radius:6px;
+  color:#edf2fa;padding:8px 10px;font-family:inherit;font-size:12px;line-height:1.5;
+  outline:none;box-sizing:border-box;margin-bottom:6px;
+}
+.note-box:focus{border-color:#7290bd;}
+.note-box::-webkit-scrollbar{width:6px;}
+.note-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.25);border-radius:3px;}
+.note-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:3px;}
+
+.cards{display:grid;gap:8px}
+.card{
+  position:relative;border:1px solid #293b58;background:#0b1930;
+  border-radius:6px;padding:10px;font-size:12px;cursor:pointer;transition:border-color .15s;
+}
+.card:hover{border-color:#6784af}
+.card strong{display:block}
+.dot{position:absolute;right:12px;top:10px;width:10px;height:10px;border-radius:50%;}
+
+/* --- 1.8 FORMULARE & BUTTONS --- */
+.add-form input{
+  width:100%;margin-bottom:8px;background:#0b1930;border:1px solid #293b58;
+  color:#fff;padding:7px;border-radius:4px;outline:none;
+}
+.add-form input:focus{border-color:#7290bd}
+.btn-primary{
+  width:100%;height:auto;min-height:35px;line-height:1.4;white-space:normal;word-break:break-word;
+  background:linear-gradient(135deg,#2a477d,#294574);border:none;color:white;
+  padding:8px 10px;border-radius:5px;cursor:pointer;font-weight:bold;
+}
+.btn-primary:hover{filter:brightness(1.15)}
+.btn-danger{background:linear-gradient(135deg,#8a2828,#6b1d1d);}
+</style>
+</head>
+
+<body>
+<!-- ==========================================================================
+     2. HTML-STRUKTUR
+     ========================================================================== -->
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>IT Atlas</h1>
+      <p>Aktueller Kenntnisstand · Informationstechnik Knowledge Graph</p>
+    </div>
+    <div class="controls">
+      <label class="search"><span>⌕</span><input id="search" placeholder="Thema suchen …"></label>
+      <button id="undoBtn" class="history-btn" title="Schritt zurück">&lt;</button>
+      <button id="redoBtn" class="history-btn" title="Schritt vor">&gt;</button>
+      <button id="exportBtn" class="io-btn" title="Backup herunterladen">⤓ Export</button>
+      <button id="importBtn" class="io-btn" title="Backup laden">⤒ Import</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+      <button id="reset">Fokus zurücksetzen</button>
+    </div>
+  </header>
+
+  <div class="subbar">
+    <span>ⓘ &nbsp;Informationstechnik im Zentrum</span>
+    <span class="help">Strg halten: Linke Kante am Raster ausrichten · Shift + Ziehen: Box-Auswahl · Klick: Fokus · Taste 'E': Reset</span>
+  </div>
+
+  <main>
+    <div class="viewport" id="viewport">
+      <div id="selectionBox" class="selection-box"></div>
+      <div class="scene" id="scene">
+        <svg class="lines" id="lines" viewBox="0 0 2000 1250"></svg>
+        <div id="nodes"></div>
+      </div>
+      <div class="zoom" id="zoom">78%</div>
+    </div>
+    <aside id="panel"></aside>
+  </main>
+</div>
+
+<!-- ==========================================================================
+     3. JAVASCRIPT-LOGIK (MIT LINKER KANTEN-AUSRICHTUNG)
+     ========================================================================== -->
+<script>
+// ==========================================================================
+// BLOCK A: ZENTRALE KONFIGURATION & INITIALDATEN
+// ==========================================================================
+const C = { name: 'Informationstechnik', x: 1000, y: 625 };
+const GRID_SIZE = 25; // 25px Raster
+
+const defaultGroups = [
+  ['Infrastruktur', 500, 250, [ ['Identität & Zugriff', []] ]],
+  ['Netzwerke', 1360, 250, [ ['Netzwerkverbindung', []], ['VPN', []], ['Proxy & Internet', []], ['Netzwerk', []] ]],
+  ['Systeme', 1500, 625, [ ['Betriebssysteme', []], ['Endpoint & Client Management', []], ['Hardware', []], ['Mobile Geräte', []] ]],
+  ['Software', 500, 1000, [ ['Softwareentwicklung', []], ['Daten & Datenbank', []], ['Web & Internet', []], ['Cloud & Visualisierung', []] ]],
+  ['Sicherheit', 1000, 1075, [ ['IT-Sicherheit', []] ]],
+  ['Service Management', 500, 625, [ ['ITSM & Prozesse', []] ]],
+  ['Künstliche Intelligenz', 1000, 175, [ ['KI & Machine Learning', []] ]]
+];
+
+// ==========================================================================
+// BLOCK B: STATE MANAGEMENT, SPEICHERUNG & UNDO / REDO (HISTORY)
+// ==========================================================================
+let activeGroups = JSON.parse(localStorage.getItem('atlas_groups')) || defaultGroups;
+let activePos = JSON.parse(localStorage.getItem('atlas_pos')) || {};
+let lockedNodes = JSON.parse(localStorage.getItem('atlas_locked')) || {};
+let activeNotes = JSON.parse(localStorage.getItem('atlas_notes')) || {};
+let selectedNodes = new Set(); 
+
+let historyStack = [];
+let redoStack = [];
+
+function saveData(recordHistory = true) {
+  if (recordHistory) {
+    historyStack.push({
+      groups: JSON.parse(JSON.stringify(activeGroups)),
+      pos: JSON.parse(JSON.stringify(activePos)),
+      locked: JSON.parse(JSON.stringify(lockedNodes)),
+      notes: JSON.parse(JSON.stringify(activeNotes))
+    });
+    if (historyStack.length > 30) historyStack.shift(); 
+    redoStack = [];
+  }
+
+  localStorage.setItem('atlas_groups', JSON.stringify(activeGroups));
+  localStorage.setItem('atlas_pos', JSON.stringify(activePos));
+  localStorage.setItem('atlas_locked', JSON.stringify(lockedNodes));
+  localStorage.setItem('atlas_notes', JSON.stringify(activeNotes));
+}
+
+// SCHRITT ZURÜCK (<)
+document.getElementById('undoBtn').onclick = () => {
+  if (historyStack.length > 0) {
+    redoStack.push({
+      groups: JSON.parse(JSON.stringify(activeGroups)),
+      pos: JSON.parse(JSON.stringify(activePos)),
+      locked: JSON.parse(JSON.stringify(lockedNodes)),
+      notes: JSON.parse(JSON.stringify(activeNotes))
+    });
+    let lastState = historyStack.pop();
+    activeGroups = lastState.groups;
+    activePos = lastState.pos;
+    lockedNodes = lastState.locked || {};
+    activeNotes = lastState.notes || {};
+    saveData(false);
+    buildGraph();
+    reset(); 
+  } else {
+    alert("Keine weiteren Schritte zum Zurückgehen vorhanden.");
+  }
+};
+
+// SCHRITT VOR (>)
+document.getElementById('redoBtn').onclick = () => {
+  if (redoStack.length > 0) {
+    historyStack.push({
+      groups: JSON.parse(JSON.stringify(activeGroups)),
+      pos: JSON.parse(JSON.stringify(activePos)),
+      locked: JSON.parse(JSON.stringify(lockedNodes)),
+      notes: JSON.parse(JSON.stringify(activeNotes))
+    });
+    let nextState = redoStack.pop();
+    activeGroups = nextState.groups;
+    activePos = nextState.pos;
+    lockedNodes = nextState.locked || {};
+    activeNotes = nextState.notes || {};
+    saveData(false);
+    buildGraph();
+    reset();
+  } else {
+    alert("Keine weiteren Schritte zum Vorwärtsgehen vorhanden.");
+  }
+};
+
+// EXPORT / BACKUP HERUNTERLADEN
+document.getElementById('exportBtn').onclick = () => {
+  const exportPayload = {
+    groups: activeGroups,
+    pos: activePos,
+    locked: lockedNodes,
+    notes: activeNotes,
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'it-atlas-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// IMPORT / BACKUP LADEN
+const importInput = document.getElementById('importFile');
+document.getElementById('importBtn').onclick = () => importInput.click();
+
+importInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data && data.groups) {
+        saveData(true);
+
+        activeGroups = data.groups || defaultGroups;
+        activePos = data.pos || {};
+        lockedNodes = data.locked || {};
+        activeNotes = data.notes || {};
+
+        saveData(false);
+        buildGraph();
+        reset();
+        alert('Atlas-Daten wurden erfolgreich importiert!');
+      } else {
+        alert('Ungültiges Dateiformat. Bitte eine korrekte IT-Atlas JSON-Datei wählen.');
+      }
+    } catch (err) {
+      alert('Fehler beim Lesen der Datei: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  importInput.value = '';
+};
+
+// ==========================================================================
+// BLOCK C: GLOBALE STRUKTUR- & DOM-REFERENZEN
+// ==========================================================================
+const colors = ['#e3c800', '#54b843', '#8843af', '#12a5a5'];
+let nodeMap = {}, parent = {}, children = {}, kindMap = {};
+const el = document.getElementById('nodes');
+const lines = document.getElementById('lines');
+
+// ==========================================================================
+// BLOCK D: RENDERING & MULTI-DRAG (MIT LINKER KANTEN-AUSRICHTUNG)
+// ==========================================================================
+function node(name, x, y, kind = 'term') {
+  const d = document.createElement('div');
+  d.className = 'node ' + kind;
+  
+  const isLocked = !!lockedNodes[name];
+  if (isLocked) d.classList.add('locked');
+
+  if (activePos[name]) { x = activePos[name].x; y = activePos[name].y; }
+  
+  d.style.left = x + 'px'; 
+  d.style.top = y + 'px';
+
+  // Schloss-Icon
+  const lock = document.createElement('span');
+  lock.className = 'lock-icon';
+  lock.textContent = isLocked ? '🔒' : '🔓';
+  lock.title = isLocked ? 'Position gesperrt (Klicken zum Entsperren)' : 'Position frei (Klicken zum Sperren)';
+
+  lock.onmousedown = e => e.stopPropagation();
+  lock.onclick = e => {
+    e.stopPropagation();
+    saveData(true);
+    lockedNodes[name] = !lockedNodes[name];
+    saveData(false);
+    lock.textContent = lockedNodes[name] ? '🔒' : '🔓';
+    lock.title = lockedNodes[name] ? 'Position gesperrt (Klicken zum Entsperren)' : 'Position frei (Klicken zum Sperren)';
+    d.classList.toggle('locked', lockedNodes[name]);
+  };
+
+  const label = document.createElement('span');
+  label.textContent = name;
+
+  d.append(lock, label);
+  
+  d.onmousedown = e => {
+    e.stopPropagation();
+    let startX = e.clientX, startY = e.clientY;
+    let moved = false;
+
+    let dragTargets = [];
+    if (selectedNodes.has(name) && selectedNodes.size > 1) {
+      selectedNodes.forEach(n => {
+        if (!lockedNodes[n] && nodeMap[n]) {
+          dragTargets.push({ name: n, startX: nodeMap[n].x, startY: nodeMap[n].y });
+        }
+      });
+    } else {
+      if (!lockedNodes[name]) {
+        dragTargets.push({ name: name, startX: nodeMap[name].x, startY: nodeMap[name].y });
+      }
+    }
+
+    const onMouseMove = ev => {
+      let dist = Math.hypot(ev.clientX - startX, ev.clientY - startY);
+      if (dist > 3) moved = true;
+      if (!moved || dragTargets.length === 0) return;
+
+      d.style.cursor = 'grabbing';
+      let dx = (ev.clientX - startX) / scale;
+      let dy = (ev.clientY - startY) / scale;
+
+      dragTargets.forEach(target => {
+        let nObj = nodeMap[target.name];
+        let nw = nObj.el.offsetWidth || 80;
+
+        let newX = target.startX + dx;
+        let newY = target.startY + dy;
+
+        // Wenn STRG gedrückt ist: Linke Kante exakt am Raster ausrichten!
+        if (ev.ctrlKey) {
+          let leftEdge = newX - nw / 2;
+          let snappedLeft = Math.round(leftEdge / GRID_SIZE) * GRID_SIZE;
+          newX = snappedLeft + nw / 2;
+
+          newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+        }
+
+        nodeMap[target.name].x = newX;
+        nodeMap[target.name].y = newY;
+        updateNodePosition(nodeMap[target.name]);
+      });
+      updateEdges();
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      d.style.cursor = lockedNodes[name] ? 'pointer' : 'grab';
+      
+      if (moved) {
+        saveData(true); 
+        dragTargets.forEach(target => {
+          activePos[target.name] = { x: nodeMap[target.name].x, y: nodeMap[target.name].y };
+        });
+        saveData(false);
+      } else {
+        if (e.shiftKey) {
+          if (selectedNodes.has(name)) {
+            selectedNodes.delete(name);
+            d.classList.remove('sel');
+          } else {
+            selectedNodes.add(name);
+            d.classList.add('sel');
+          }
+        } else {
+          if (d.classList.contains('sel') && selectedNodes.size === 1 && selectedNodes.has(name)) {
+            reset();
+          } else {
+            focus(name);
+          }
+        }
+      }
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  el.append(d); 
+  nodeMap[name] = { el: d, x, y, kind };
+  kindMap[name] = kind;
+}
+
+// ==========================================================================
+// BLOCK E: SVG-KANTEN & PFAD-BERECHNUNG
+// ==========================================================================
+function edge(a, b, center = false) {
+  const A = nodeMap[a], B = nodeMap[b];
+  if (!A || !B) return;
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.classList.add('edge');
+  if (center) path.classList.add('center-line');
+  path.dataset.a = a; 
+  path.dataset.b = b;
+  lines.append(path);
+  updateEdgePath(path, A, B);
+}
+
+function updateEdgePath(path, A, B) {
+  const ax = A.x, ay = A.y, bx = B.x, by = B.y;
+  const dx = bx - ax, dy = by - ay;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const bend = Math.min(75, len * RADIAL.curveStrength);
+  const mx = (ax + bx) / 2 + nx * bend;
+  const my = (ay + by) / 2 + ny * bend;
+  path.setAttribute('d', `M ${ax} ${ay} Q ${mx} ${my} ${bx} ${by}`);
+}
+
+function updateNodePosition(n) {
+  n.el.style.left = n.x + 'px';
+  n.el.style.top = n.y + 'px';
+}
+
+function updateEdges() {
+  document.querySelectorAll('.lines .edge').forEach(l => {
+    const A = nodeMap[l.dataset.a], B = nodeMap[l.dataset.b];
+    if (!A || !B) return;
+    updateEdgePath(l, A, B);
+  });
+}
+
+// ==========================================================================
+// BLOCK F: GEOMETRIE- & LAYOUT-BERECHNUNGEN (RADIAL)
+// ==========================================================================
+const RADIAL = {
+  centerX: C.x, centerY: C.y, groupRadius: 300, outerRadius: 500, sectorGap: 18, minNodeGap: 10, curveStrength: 0.18
+};
+
+function polarPoint(cx, cy, r, deg) {
+  const a = deg * Math.PI / 180;
+  return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+}
+
+function nodeHalfWidth(name, kind) {
+  const probe = document.createElement('div');
+  probe.className = 'node ' + kind; 
+  probe.textContent = name;
+  probe.style.position = 'absolute'; 
+  probe.style.visibility = 'hidden';
+  probe.style.left = '-9999px'; 
+  probe.style.top = '-9999px';
+  el.append(probe);
+  const w = probe.offsetWidth || 120, h = probe.offsetHeight || 32;
+  probe.remove();
+  return { w: w / 2, h: h / 2 };
+}
+
+function placeOnOuterCircle(names, sectorCenter, sectorWidth) {
+  if (!names.length) return [];
+  const sizes = names.map(n => nodeHalfWidth(n, 'term'));
+  const radius = RADIAL.outerRadius;
+  const usable = Math.max(20, sectorWidth - RADIAL.sectorGap * 2);
+  let required = 0;
+  for (let i = 0; i < sizes.length - 1; i++) {
+    const a = sizes[i], b = sizes[i + 1];
+    required += Math.max(a.w + b.w + RADIAL.minNodeGap, a.h + b.h + RADIAL.minNodeGap) / radius * 180 / Math.PI;
+  }
+  const step = Math.max(4, Math.min(usable / Math.max(1, names.length - 1), required / Math.max(1, names.length - 1)));
+  const total = step * (names.length - 1);
+  const start = sectorCenter - total / 2;
+  return names.map((name, i) => polarPoint(RADIAL.centerX, RADIAL.centerY, radius, start + i * step));
+}
+
+// ==========================================================================
+// BLOCK G: GRAPH-INITIALISIERUNG & KOLLISIONSAUFLÖSUNG
+// ==========================================================================
+function buildGraph() {
+  el.innerHTML = ''; 
+  lines.innerHTML = '';
+  selectedNodes.clear();
+  for (let k in nodeMap) delete nodeMap[k];
+  for (let k in parent) delete parent[k];
+  for (let k in children) delete children[k];
+  for (let k in kindMap) delete kindMap[k];
+
+  node(C.name, C.x, C.y, 'center');
+
+  const groupAngles = Array.from({ length: activeGroups.length }, (_, i) => -90 + i * (360 / activeGroups.length));
+
+  activeGroups.forEach((g, gi) => {
+    const [name, _, __, themes] = g;
+    const ga = groupAngles[gi];
+    const [gx, gy] = polarPoint(RADIAL.centerX, RADIAL.centerY, RADIAL.groupRadius, ga);
+
+    node(name, gx, gy, 'group');
+    parent[name] = C.name;
+    children[C.name] ??= []; 
+    children[C.name].push(name);
+    edge(C.name, name, true);
+
+    const sectorCenter = ga;
+    const sectorWidth = 72;
+    const directNames = themes.map(t => t[0]);
+    const directPts = placeOnOuterCircle(directNames, sectorCenter, sectorWidth);
+
+    themes.forEach((theme, ti) => {
+      const [themeName, terms] = theme;
+      const [tx, ty] = directPts[ti];
+      node(themeName, tx, ty, 'theme');
+      parent[themeName] = name;
+      children[name] ??= []; 
+      children[name].push(themeName);
+      edge(name, themeName);
+
+      if (terms.length) {
+        const localRadius = Math.max(88, Math.min(130, 62 + terms.length * 8));
+        const childAngle = Math.atan2(ty - RADIAL.centerY, tx - RADIAL.centerX) * 180 / Math.PI;
+        const tangent = childAngle + 90;
+        const spread = Math.min(70, Math.max(18, (terms.length - 1) * 12));
+
+        terms.forEach((t, i) => {
+          const a = tangent + (i - (terms.length - 1) / 2) * spread;
+          const [sx, sy] = polarPoint(tx, ty, localRadius, a);
+          node(t, sx, sy, 'term');
+          parent[t] = themeName;
+          children[themeName] ??= []; 
+          children[themeName].push(t);
+          edge(themeName, t);
+        });
+      }
+    });
+  });
+
+  requestAnimationFrame(() => solveCollisions());
+}
+
+function solveCollisions() {
+  const terms = Object.values(nodeMap).filter(n => n.kind === 'term');
+  const fixed = Object.values(nodeMap).filter(n => n.kind !== 'term');
+  function rect(n, x, y) {
+    const w = n.el.offsetWidth || 120, h = n.el.offsetHeight || 32;
+    return { left: x - w / 2, right: x + w / 2, top: y - h / 2, bottom: y + h / 2, w, h };
+  }
+  function clear(a, b, gap) {
+    return a.right + gap <= b.left || a.left - gap >= b.right || a.bottom + gap <= b.top || a.top - gap >= b.bottom;
+  }
+  function collides(n, x, y, placed, gap) {
+    const r = rect(n, x, y);
+    for (const p of fixed) { if (p !== n && !clear(r, rect(p, p.x, p.y), gap)) return true; }
+    for (const p of placed) { if (p !== n && !clear(r, rect(p, p.x, p.y), gap)) return true; }
+    return false;
+  }
+
+  const gap = 6, maxRadius = 360, placed = [];
+
+  terms.forEach(n => {
+    const nodeName = n.el.querySelector('span:last-child').textContent;
+    if (activePos[nodeName]) { placed.push(n); return; }
+
+    const p = parent[nodeName];
+    const child = nodeMap[p];
+    if (!child) return;
+
+    const dx = child.x - C.x, dy = child.y - C.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len, vx = -uy, vy = ux;
+    let found = null;
+
+    for (let r = 48; r <= maxRadius && !found; r += 8) {
+      const count = Math.max(8, Math.ceil(2 * Math.PI * r / 24));
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2;
+        const x = child.x + ux * r * Math.cos(a) + vx * r * Math.sin(a), y = child.y + uy * r * Math.cos(a) + vy * r * Math.sin(a);
+        if (x < 70 || x > 1930 || y < 45 || y > 1205) continue;
+        if (!collides(n, x, y, placed, gap)) { found = { x, y }; break; }
+      }
+    }
+    if (found) { n.x = found.x; n.y = found.y; placed.push(n); }
+  });
+
+  Object.values(nodeMap).forEach(updateNodePosition);
+  updateEdges();
+}
+
+// ==========================================================================
+// BLOCK H: SEITENLEISTE (PANEL UI), NOTIZEN & KARTEN
+// ==========================================================================
+function directGroups() { return activeGroups.map(g => g[0]); }
+function directChildren(name) { return children[name] || []; }
+
+function card(name) {
+  return `<div class="card" data-name="${name}"><i class="dot" style="background:#6aa7ed"></i><strong>${name}</strong></div>`;
+}
+
+function panel(name = C.name) {
+  const isCenter = name === C.name;
+  const kind = kindMap[name];
+
+  let neighbors = [];
+  if (parent[name]) neighbors.push(parent[name]);
+  directChildren(name).forEach(c => neighbors.push(c));
+  if (isCenter) {
+    neighbors = directGroups();
+  }
+
+  let neighborCards = neighbors.map(n => card(n)).join('');
+  let actionHtml = '';
+
+  if (kind !== 'term') { 
+    actionHtml += `
+      <button id="showAddFormBtn" class="btn-primary" style="margin-bottom:8px;">+ Unterbegriff zu '${name}' hinzufügen</button>
+      <div id="addFormArea" class="add-form" style="display:none; flex-direction:column; margin-bottom:10px;">
+        <input id="newNodeName" placeholder="Name des neuen Begriffs...">
+        <button id="saveNodeBtn" class="btn-primary">Speichern</button>
+      </div>
+    `;
+  }
+
+  if (!isCenter) {
+    actionHtml += `
+      <button id="showRenameBtn" class="btn-primary" style="margin-bottom:8px;">'${name}' umbenennen</button>
+      <div id="renameFormArea" class="add-form" style="display:none; flex-direction:column; margin-bottom:10px;">
+        <input id="renameInput" value="${name}">
+        <button id="saveRenameBtn" class="btn-primary">Name speichern</button>
+      </div>
+    `;
+
+    actionHtml += `<button id="deleteNodeBtn" class="btn-primary btn-danger" style="margin-bottom:18px;">'${name}' löschen</button>`;
+  }
+
+  let notesHtml = `
+    <div class="rule"></div>
+    <div class="heading">Notizen & Erklärung</div>
+    <textarea id="nodeNotes" class="note-box" placeholder="Notizen oder Erklärung zu '${name}' hier eingeben...">${activeNotes[name] || ''}</textarea>
+  `;
+
+  document.getElementById('panel').innerHTML =
+    `<h2>${name}</h2><div class="subtitle" style="margin-bottom:18px;">${
+      isCenter ? 'Zentrum der Informationstechnik' : kind === 'group' ? 'Hauptbereich' : kind === 'theme' ? 'Thema' : 'Unterbegriff'
+    }</div>` + actionHtml + notesHtml +
+    `<div class="rule"></div><div class="heading">Nachbarn</div><div class="cards">${neighborCards || '<span style="font-size:12px;color:#aeb8c9;">Keine Nachbarn</span>'}</div>`;
+
+  document.querySelectorAll('.card[data-name]').forEach(x => x.onclick = () => focus(x.dataset.name));
+
+  const notesEl = document.getElementById('nodeNotes');
+  if (notesEl) {
+    notesEl.oninput = (e) => {
+      activeNotes[name] = e.target.value;
+      localStorage.setItem('atlas_notes', JSON.stringify(activeNotes));
+    };
+    notesEl.onchange = () => {
+      saveData(true);
+    };
+  }
+
+  let btnShow = document.getElementById('showAddFormBtn');
+  if (btnShow) {
+    btnShow.onclick = () => {
+      btnShow.style.display = 'none';
+      document.getElementById('addFormArea').style.display = 'flex';
+    };
+    document.getElementById('saveNodeBtn').onclick = () => {
+      let nName = document.getElementById('newNodeName').value.trim();
+      if (nName) addNodeToData(name, nName);
+    };
+  }
+
+  let btnRename = document.getElementById('showRenameBtn');
+  if (btnRename) {
+    btnRename.onclick = () => {
+      btnRename.style.display = 'none';
+      document.getElementById('renameFormArea').style.display = 'flex';
+      document.getElementById('renameInput').focus();
+    };
+    document.getElementById('saveRenameBtn').onclick = () => {
+      let newName = document.getElementById('renameInput').value.trim();
+      if (newName && newName !== name) {
+        renameNodeInData(name, newName);
+      }
+    };
+  }
+
+  let btnDel = document.getElementById('deleteNodeBtn');
+  if (btnDel) {
+    btnDel.onclick = () => {
+      if (confirm(`Möchtest du '${name}' und alle dazugehörigen Unterbegriffe wirklich löschen?`)) {
+        deleteNodeFromData(name);
+      }
+    };
+  }
+}
+
+// ==========================================================================
+// BLOCK I: DATEN-MANIPULATION (HINZUFÜGEN, UMBENENNEN, LÖSCHEN)
+// ==========================================================================
+function addNodeToData(parentName, newName) {
+  saveData(true); 
+
+  if (parentName === C.name) {
+    activeGroups.push([newName, C.x, C.y, []]);
+  } else if (kindMap[parentName] === 'group') {
+    let g = activeGroups.find(x => x[0] === parentName);
+    if (g) g[3].push([newName, []]);
+  } else if (kindMap[parentName] === 'theme') {
+    for (let g of activeGroups) {
+      let t = g[3].find(x => x[0] === parentName);
+      if (t) { t[1].push(newName); break; }
+    }
+  }
+
+  saveData(false);
+  buildGraph();
+  focus(newName);
+}
+
+function renameNodeInData(oldName, newName) {
+  saveData(true);
+
+  if (kindMap[oldName] === 'group') {
+    let g = activeGroups.find(x => x[0] === oldName);
+    if (g) g[0] = newName;
+  } else if (kindMap[oldName] === 'theme') {
+    activeGroups.forEach(g => {
+      let t = g[3].find(x => x[0] === oldName);
+      if (t) t[0] = newName;
+    });
+  } else if (kindMap[oldName] === 'term') {
+    activeGroups.forEach(g => {
+      g[3].forEach(t => {
+        let idx = t[1].indexOf(oldName);
+        if (idx !== -1) t[1][idx] = newName;
+      });
+    });
+  }
+
+  if (activePos[oldName]) {
+    activePos[newName] = activePos[oldName];
+    delete activePos[oldName];
+  }
+  if (lockedNodes[oldName] !== undefined) {
+    lockedNodes[newName] = lockedNodes[oldName];
+    delete lockedNodes[oldName];
+  }
+  if (activeNotes[oldName] !== undefined) {
+    activeNotes[newName] = activeNotes[oldName];
+    delete activeNotes[oldName];
+  }
+
+  saveData(false);
+  buildGraph();
+  focus(newName);
+}
+
+function deleteNodeFromData(nodeName) {
+  if (nodeName === C.name) return;
+  saveData(true); 
+
+  if (kindMap[nodeName] === 'group') {
+    activeGroups = activeGroups.filter(g => g[0] !== nodeName);
+  } else if (kindMap[nodeName] === 'theme') {
+    activeGroups.forEach(g => {
+      g[3] = g[3].filter(t => t[0] !== nodeName);
+    });
+  } else if (kindMap[nodeName] === 'term') {
+    activeGroups.forEach(g => {
+      g[3].forEach(t => {
+        t[1] = t[1].filter(term => term !== nodeName);
+      });
+    });
+  }
+
+  delete activePos[nodeName];
+  delete lockedNodes[nodeName];
+  delete activeNotes[nodeName];
+
+  saveData(false);
+  buildGraph();
+  reset();
+}
+
+// ==========================================================================
+// BLOCK J: INTERAKTIONS-LOGIK (FOKUS, RESET & SUCHE)
+// ==========================================================================
+function focus(name) {
+  selectedNodes.clear();
+  selectedNodes.add(name);
+  Object.values(nodeMap).forEach(n => n.el.classList.remove('sel', 'dim'));
+
+  const keep = new Set([name]);
+  if (name === C.name) { 
+    directGroups().forEach(x => keep.add(x));
+  } else {
+    if (parent[name]) keep.add(parent[name]);
+    directChildren(name).forEach(x => keep.add(x));
+  }
+
+  Object.entries(nodeMap).forEach(([k, n]) => {
+    if (!keep.has(k)) n.el.classList.add('dim');
+  });
+  
+  nodeMap[name].el.classList.add('sel');
+  panel(name);
+}
+
+function reset() {
+  selectedNodes.clear();
+  Object.values(nodeMap).forEach(n => n.el.classList.remove('sel', 'dim'));
+  panel(C.name);
+}
+
+document.getElementById('reset').onclick = reset;
+document.getElementById('search').oninput = e => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) { reset(); return; }
+  Object.entries(nodeMap).forEach(([n, o]) => o.el.classList.toggle('dim', !n.toLowerCase().includes(q)));
+};
+
+// ==========================================================================
+// BLOCK K: VIEWPORT-NAVIGATION & BOX-AUSWAHL (SHIFT + DRAG)
+// ==========================================================================
+let scale = 0.72, tx = -40, ty = -80, drag = false, sx, sy, ox, oy;
+let isSelecting = false, boxStartX = 0, boxStartY = 0;
+
+const view = document.getElementById('viewport'), scene = document.getElementById('scene');
+const selBox = document.getElementById('selectionBox');
+
+function render() {
+  scene.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+  document.getElementById('zoom').textContent = Math.round(scale * 100) + '%';
+}
+render();
+
+view.onmousedown = e => {
+  if (e.button !== 0 || e.target.closest('.node')) return;
+  const rect = view.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  if (e.shiftKey) {
+    isSelecting = true;
+    boxStartX = mouseX;
+    boxStartY = mouseY;
+    selBox.style.left = boxStartX + 'px';
+    selBox.style.top = boxStartY + 'px';
+    selBox.style.width = '0px';
+    selBox.style.height = '0px';
+    selBox.style.display = 'block';
+    view.classList.add('selecting');
+    selectedNodes.clear();
+    Object.values(nodeMap).forEach(n => n.el.classList.remove('sel', 'dim'));
+  } else {
+    drag = true; 
+    sx = e.clientX; 
+    sy = e.clientY; 
+    ox = tx; 
+    oy = ty; 
+    view.classList.add('drag');
+  }
+};
+
+window.onmousemove = e => {
+  const rect = view.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  if (isSelecting) {
+    const left = Math.min(boxStartX, mouseX);
+    const top = Math.min(boxStartY, mouseY);
+    const width = Math.abs(mouseX - boxStartX);
+    const height = Math.abs(mouseY - boxStartY);
+
+    selBox.style.left = left + 'px';
+    selBox.style.top = top + 'px';
+    selBox.style.width = width + 'px';
+    selBox.style.height = height + 'px';
+
+    const sceneLeft = (left - tx) / scale;
+    const sceneTop = (top - ty) / scale;
+    const sceneRight = (left + width - tx) / scale;
+    const sceneBottom = (top + height - ty) / scale;
+
+    selectedNodes.clear();
+    Object.entries(nodeMap).forEach(([nName, nObj]) => {
+      const nw = (nObj.el.offsetWidth || 80);
+      const nh = (nObj.el.offsetHeight || 30);
+      const nLeft = nObj.x - nw / 2;
+      const nRight = nObj.x + nw / 2;
+      const nTop = nObj.y - nh / 2;
+      const nBottom = nObj.y + nh / 2;
+
+      const inBox = (nLeft < sceneRight && nRight > sceneLeft && nTop < sceneBottom && nBottom > sceneTop);
+      if (inBox) {
+        selectedNodes.add(nName);
+        nObj.el.classList.add('sel');
+      } else {
+        nObj.el.classList.remove('sel');
+      }
+    });
+  } else if (drag) {
+    tx = ox + e.clientX - sx;
+    ty = oy + e.clientY - sy;
+    render();
+  }
+};
+
+window.onmouseup = (e) => {
+  if (isSelecting) {
+    isSelecting = false;
+    selBox.style.display = 'none';
+    view.classList.remove('selecting');
+  }
+  if (drag) {
+    let movedDist = Math.hypot(e.clientX - sx, e.clientY - sy);
+    drag = false;
+    view.classList.remove('drag');
+    if (movedDist < 4) {
+      reset();
+    }
+  }
+};
+
+view.onwheel = e => {
+  e.preventDefault();
+  const r = view.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, old = scale;
+  scale = Math.max(0.5, Math.min(1.5, scale * (e.deltaY < 0 ? 1.09 : 0.92)));
+  tx = mx - (mx - tx) * scale / old;
+  ty = my - (my - ty) * scale / old;
+  render();
+};
+
+// ==========================================================================
+// BLOCK L: TASTATUR-EVENTS (STRG-RASTER & RESET)
+// ==========================================================================
+buildGraph();
+panel();
+
+// Strg-Taste: Raster einblenden
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Control') {
+    scene.classList.add('grid-active');
+  }
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.key.toLowerCase() === 'e') reset();
+});
+
+// Strg-Taste loslassen: Raster ausblenden
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'Control') {
+    scene.classList.remove('grid-active');
+  }
+});
+</script>
+</body>
+</html>
