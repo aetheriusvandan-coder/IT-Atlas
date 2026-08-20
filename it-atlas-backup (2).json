@@ -1,0 +1,111 @@
+{
+  "groups": [
+    {
+      "id": "n_mt1tsaxh_sun21",
+      "name": "Infrastruktur",
+      "x": 1000,
+      "y": 625,
+      "children": []
+    },
+    {
+      "id": "n_mt1tsaxi_srujs",
+      "name": "te",
+      "x": 1000,
+      "y": 625,
+      "children": []
+    },
+    {
+      "id": "n_mt1tsaxi_gwodn",
+      "name": "Identität",
+      "x": 1000,
+      "y": 625,
+      "children": [
+        {
+          "id": "n_mt1uzkvj_9pg61",
+          "name": "test",
+          "children": [
+            {
+              "id": "n_mt1uznt6_b2foa",
+              "name": "test",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n_mt1tsaxi_00cvu",
+      "name": "Security",
+      "x": 1000,
+      "y": 625,
+      "children": []
+    },
+    {
+      "id": "n_mt1tsaxi_l5rbq",
+      "name": "Anwendung & Daten",
+      "x": 1000,
+      "y": 625,
+      "children": []
+    },
+    {
+      "id": "n_mt1tsaxi_cbgvv",
+      "name": "ITSM",
+      "x": 1000,
+      "y": 625,
+      "children": []
+    }
+  ],
+  "pos": {
+    "n_mt1tsaxi_gwodn": {
+      "x": 2966.429839365694,
+      "y": 1895.054341309633
+    },
+    "n_mt1tsaxi_srujs": {
+      "x": 2906.4105840671177,
+      "y": 1621.318547416658
+    },
+    "n_mt1tsaxh_sun21": {
+      "x": 2473.5,
+      "y": 1350
+    },
+    "n_mt1tsaxi_cbgvv": {
+      "x": 2127,
+      "y": 1550
+    },
+    "n_mt1tsaxi_00cvu": {
+      "x": 2562.6786510465936,
+      "y": 2136.534541665395
+    },
+    "root": {
+      "x": 2488.676127689867,
+      "y": 1762.9261400010237
+    },
+    "n_mt1tsaxi_l5rbq": {
+      "x": 2122,
+      "y": 1950
+    },
+    "n_mt1uzkvj_9pg61": {
+      "x": 3076.6238671886917,
+      "y": 2077.0704948051753
+    },
+    "n_mt1uznt6_b2foa": {
+      "x": 3210.198187501907,
+      "y": 2214.1395781359656
+    }
+  },
+  "locked": {},
+  "notes": {
+    "Referenzmodelle (OSI)": "",
+    "Informationstechnik": "-massen löschen nach mehrhaf tauswählen\n-verbindung ändern\n-größere Karte\n-begriffe spawnen im bereich des oberbegriffs\n-Vorschläge zu Nachbarn verbinden um schnittstellen zu erkennen\n-im Fokus nicht andere low opasity begriffe aus versehen verschieben\n-wasd karte schieben statt linksklick\n-smoother machen auch bei 60hz\n-bug wenn eine note zweimal existiert\n\n-als nachbarn machen das wenn man ein begriffa anklickt das die nachbarn also schnittstellen drunter auswählbar sind und mann dann zu dem begriff springt, wenn der nicht vorhanden ist soll eine fehlermeldung kommen das der gewünschte begriff noch fehlt\n-die gelisteten schnittstellen (nachbarn) erhalten keine visuelle linie",
+    "root": "test",
+    "n_mt1tsaxi_gwodn": "test",
+    "n_mt1tsaxi_srujs": "",
+    "n_mt1tsaxi_bw2n4": "",
+    "n_mt1tsaxi_00cvu": "",
+    "n_mt1tsaxi_l5rbq": "",
+    "n_mt1tsaxh_sun21": "",
+    "n_mt1uzkvj_9pg61": "",
+    "n_mt1uznt6_b2foa": ""
+  },
+  "exportedAt": "2026-08-20T18:33:48.798Z"
+}
